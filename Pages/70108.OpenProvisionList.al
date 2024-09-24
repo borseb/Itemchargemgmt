@@ -3,8 +3,12 @@ page 70108 "Open Provision List"
     ApplicationArea = All;
     Caption = 'Open Provision List';
     PageType = List;
+    InsertAllowed = false;
+    DeleteAllowed = false;
+    ModifyAllowed = false;
     SourceTable = "Open Provision";
     UsageCategory = Lists;
+    Editable = false;
 
     layout
     {
@@ -37,10 +41,7 @@ page 70108 "Open Provision List"
                 {
                     ToolTip = 'Specifies the value of the BPO No. field.', Comment = '%';
                 }
-                field("Reversal Document No"; Rec."Reversal Document No")
-                {
-                    ToolTip = 'Specifies the value of the Reversal Document No field.', Comment = '%';
-                }
+
                 field("Posted Provision"; Rec."Posted Provision")
                 {
                     ToolTip = 'Specifies the value of the Posted Provision field.', Comment = '%';
@@ -68,7 +69,14 @@ page 70108 "Open Provision List"
                 {
                     ToolTip = 'Specifies the value of the Remaning Open Provision field.', Comment = '%';
                 }
+                field("Transporter Code"; Rec."Transporter Code")
+                {
 
+                }
+                field("Transporter Name"; Rec."Transporter Name")
+                {
+
+                }
 
                 field(SystemCreatedBy; Rec.SystemCreatedBy)
                 {
@@ -96,6 +104,7 @@ page 70108 "Open Provision List"
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
+                Visible = false;
                 trigger OnAction()
                 var
                     Purreceiptline: Record "Purch. Rcpt. Line";
@@ -108,7 +117,9 @@ page 70108 "Open Provision List"
 
                     Purreceiptline.Reset();
                     Purreceiptline.SetRange(Type, Purreceiptline.Type::Item);
-                    if Purreceiptline.FindSet() then
+                    //Purreceiptline.SetFilter("Document No.", '<>%1', Rec."Receipt No.");
+                    Purreceiptline.SetRange("Document No.", Rec."Receipt No.");
+                    if not Purreceiptline.FindSet() then
                         repeat
                             Openpro.Init();
                             Openpro."Receipt No." := Purreceiptline."Document No.";
@@ -134,8 +145,6 @@ page 70108 "Open Provision List"
                             if ILE.FindFirst() then
                                 Openpro."Item Ledger Entry No" := ILE."Entry No.";
                             Openpro.Insert();
-
-
                         //if OPlist.FindLast() then
                         //   Openpro."Line No." := OPlist."Line No." + 10000
                         //else
@@ -144,8 +153,67 @@ page 70108 "Open Provision List"
                         until Purreceiptline.Next = 0;
                 end;
             }
+            action(reverseProvision)
+            {
+                Caption = 'Reverse Provision';
+                ApplicationArea = All;
+                Image = ReverseLines;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+
+                trigger OnAction()
+                var
+                begin
+                    Openprov.Reset();
+                    Openprov.SetRange("Receipt No.", Rec."Receipt No.");
+                    reverseprovReport.SetTableView(Openprov);
+                    Commit();
+                    reverseprovReport.RunModal();
+
+                end;
+            }
+            action(ValueEntries)
+            {
+                ApplicationArea = All;
+                Caption = 'Value Entries';
+
+                trigger OnAction()
+                var
+                    valueentries: Record "Value Entry";
+                    valueentrpage: Page "Value Entries";
+                begin
+                    valueentries.Reset();
+                    valueentries.SetRange("Item Ledger Entry No.", Rec."Item Ledger Entry No");
+                    valueentrpage.SetTableView(valueentries);
+                    valueentrpage.Run();
+                end;
+            }
+            action(testRun)
+            {
+                ApplicationArea = All;
+                Caption = 'Test Codeunit';
+
+                trigger OnAction()
+                var
+                    valueentries: Record "Value Entry";
+                    openreverse: Codeunit 70105;
+                begin
+                    openreverse.Run(Rec);
+                end;
+            }
         }
     }
+    trigger OnAfterGetCurrRecord()
+    var
+
+    begin
+        if Rec."Provision Reverse" then
+            Isreportrun := false
+        else
+            Isreportrun := true;
+    end;
+
     trigger OnAfterGetRecord()
     var
         myInt: Integer;
@@ -153,9 +221,16 @@ page 70108 "Open Provision List"
         Rec.CalcFields("Reversed Provision", "Posted Provision");
         Rec."Remaning Open Provision" := Abs(Rec."Posted Provision" + Rec."Reversed Provision");
         Rec.Modify();
+        if Rec."Provision Reverse" then
+            Isreportrun := false
+        else
+            Isreportrun := true;
     end;
 
     var
         Openpro: Record "Open Provision";
+        reverseprovReport: Report "Reverse Provision Creation";
+        Openprov: Record "Open Provision";
+        Isreportrun: Boolean;
 
 }

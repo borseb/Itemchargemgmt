@@ -77,6 +77,14 @@ table 70103 "Open Provision"
         {
             DataClassification = ToBeClassified;
         }
+        field(18; "Transporter Code"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(19; "Transporter Name"; Text[50])
+        {
+            DataClassification = ToBeClassified;
+        }
     }
     keys
     {

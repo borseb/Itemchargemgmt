@@ -1,9 +1,20 @@
 codeunit 70105 POtest
 {
+    TableNo = 70103;
     trigger OnRun()
     begin
 
     end;
+
+
+    var
+        Purreceiptline: Record "Purch. Rcpt. Line";
+        PurchLine: Record "Purchase Line";
+        Purchhdr: Record "Purchase Header";
+        PurchReceiptHdr: Record "Purch. Rcpt. Header";
+        Dimn: Record "Dimension Set Entry";
+        ILE: Record "Item Ledger Entry";
+        Openpro: Record "Open Provision";
     /*
         [EventSubscriber(ObjectType::Table, Database::"Purchase Line", OnValidateOverReceiptQuantity, '', false, false)]
 
@@ -74,6 +85,5 @@ begin
    end;
 end;
 */
-    var
-        myInt: Integer;
+
 }
